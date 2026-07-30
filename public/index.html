@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rexify Automation Control</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.3/index.css">
+<style>
+  :root{
+    --black: #000000;
+    --grey-950: #0a0a0a;
+    --grey-900: #111111;
+    --grey-800: #1a1a1a;
+    --grey-700: #262626;
+    --grey-500: #737373;
+    --grey-300: #a3a3a3;
+    --white: #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--black);
+  }
+
+  body {
+    font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 64px 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 640px;
+    width: 100%;
+  }
+
+  .header {
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--grey-500);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  form { display: block; }
+
+  /* ── Mode selector row ── */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    .mode-grid { grid-template-columns: 1fr; }
+  }
+
+  .select-wrap { display: flex; flex-direction: column; gap: 8px; }
+
+  .select-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--grey-500);
+  }
+
+  .custom-select {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .custom-select select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--grey-950);
+    border: 1.5px solid var(--grey-700);
+    border-radius: 10px;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 13px 40px 13px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+    outline: none;
+  }
+
+  .custom-select select:hover,
+  .custom-select select:focus { border-color: var(--white); }
+
+  .custom-select select option {
+    background: var(--grey-900);
+    color: var(--white);
+  }
+
+  .custom-select .chevron {
+    position: absolute;
+    right: 13px;
+    pointer-events: none;
+    color: var(--grey-500);
+    display: flex;
+    align-items: center;
+  }
+
+  .custom-select .chevron svg { width: 15px; height: 15px; }
+
+  /* ── Conditional panels ── */
+  .panel {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease, margin-bottom 0.3s ease;
+    margin-bottom: 0;
+  }
+
+  .panel.visible {
+    max-height: 300px;
+    opacity: 1;
+    margin-bottom: 16px;
+  }
+
+  /* ── Dropzone ── */
+  .dropzone {
+    position: relative;
+    border: 2px dashed var(--grey-700);
+    border-radius: 16px;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    background: var(--grey-950);
+    padding: 0 16px;
+    text-align: center;
+  }
+
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--white);
+    background: var(--grey-900);
+  }
+
+  .dropzone.has-file {
+    border-style: solid;
+    border-color: var(--white);
+    background: var(--grey-900);
+  }
+
+  .plus-ring {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--grey-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .dropzone:hover .plus-ring, .dropzone.dragover .plus-ring {
+    border-color: var(--white);
+    transform: scale(1.06);
+  }
+
+  .plus-ring svg { width: 18px; height: 18px; }
+
+  .dz-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .dz-sub {
+    font-size: 0.73rem;
+    font-weight: 500;
+    color: var(--grey-500);
+    margin-top: 5px;
+  }
+
+  .dz-tag {
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--grey-500);
+    position: absolute;
+    top: 13px;
+    left: 15px;
+  }
+
+  input[type="file"] { display: none; }
+
+  /* ── Auto-gen URL fields ── */
+  .autogen-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .field-input {
+    width: 100%;
+    background: var(--grey-950);
+    border: 1.5px solid var(--grey-700);
+    border-radius: 10px;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .field-input::placeholder { color: var(--grey-500); }
+  .field-input:focus { border-color: var(--white); }
+
+  /* hide number arrows */
+  .field-input[type="number"]::-webkit-inner-spin-button,
+  .field-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .field-input[type="number"] { -moz-appearance: textfield; }
+
+  /* ── Buttons ── */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+  }
+
+  button {
+    padding: 15px 24px;
+    border: none;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.05s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  #startBtn {
+    width: 100%;
+    background: var(--white);
+    color: var(--black);
+  }
+
+  #startBtn:hover { opacity: 0.85; }
+  #startBtn:active { transform: scale(0.99); }
+
+  #startBtn:disabled {
+    background: var(--grey-700);
+    color: var(--grey-500);
+    cursor: not-allowed;
+    opacity: 1;
+  }
+
+  #stopBtn {
+    background: transparent;
+    color: var(--grey-500);
+    border: 1.5px solid var(--grey-700);
+    white-space: nowrap;
+    min-width: 90px;
+  }
+
+  #stopBtn:hover:not(:disabled) {
+    color: var(--white);
+    border-color: var(--white);
+  }
+
+  #stopBtn:active:not(:disabled) { transform: scale(0.99); }
+
+  #stopBtn:disabled {
+    color: var(--grey-700);
+    border-color: var(--grey-800);
+    cursor: not-allowed;
+  }
+
+  .terminal-section {
+    margin-top: 40px;
+  }
+
+  .terminal-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--grey-500);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--grey-500);
+  }
+
+  .terminal {
+    background: var(--grey-900);
+    border: 1px solid var(--grey-800);
+    border-radius: 12px;
+    padding: 18px 20px;
+    font-family: 'SF Mono', 'Geist Mono', ui-monospace, monospace;
+    height: 340px;
+    overflow-y: auto;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+
+  .terminal::-webkit-scrollbar { width: 8px; }
+  .terminal::-webkit-scrollbar-thumb { background: var(--grey-700); border-radius: 8px; }
+  .terminal::-webkit-scrollbar-track { background: transparent; }
+
+  .log-line {
+    color: var(--grey-300);
+    word-break: break-word;
+  }
+
+  .log-line .ts {
+    color: var(--grey-500);
+    margin-right: 10px;
+  }
+
+  .log-info { color: var(--white); }
+  .log-error { color: var(--grey-300); font-weight: 700; }
+  .log-error::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background: var(--white);
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="eyebrow">Rexify / Automation</div>
+      <h1>Automation control</h1>
+    </div>
+
+    <form id="uploadForm">
+
+      <!-- Mode selectors -->
+      <div class="mode-grid">
+        <div class="select-wrap">
+          <span class="select-label">Account source</span>
+          <div class="custom-select">
+            <select id="accountMode">
+              <option value="auto">Automatic account</option>
+              <option value="manual">Manual upload</option>
+            </select>
+            <span class="chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
+        </div>
+        <div class="select-wrap">
+          <span class="select-label">URL source</span>
+          <div class="custom-select">
+            <select id="urlMode">
+              <option value="autogen">Auto-gen URL</option>
+              <option value="manual">Manual upload</option>
+            </select>
+            <span class="chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account manual upload panel -->
+      <div class="panel" id="accountPanel">
+        <label for="accountsFile">
+          <div class="dropzone" id="accountsZone">
+            <span class="dz-tag">accounts.csv</span>
+            <div class="plus-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </div>
+            <div class="dz-title" id="accountsTitle">Upload account details</div>
+            <div class="dz-sub" id="accountsSub">Bank name and account number</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- URL manual upload panel -->
+      <div class="panel" id="urlManualPanel">
+        <label for="urlsFile">
+          <div class="dropzone" id="urlsZone">
+            <span class="dz-tag">urls.csv</span>
+            <div class="plus-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </div>
+            <div class="dz-title" id="urlsTitle">Upload target URLs</div>
+            <div class="dz-sub" id="urlsSub">One URL per row</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- URL auto-gen fields panel -->
+      <div class="panel visible" id="urlAutoPanel">
+        <div class="autogen-fields">
+          <input type="url" id="targetUrl" class="field-input" placeholder="Target URL  e.g. https://example.com" />
+          <input type="number" id="urlCount" class="field-input" placeholder="Number of target URL accounts" min="1" />
+        </div>
+      </div>
+
+      <!-- Hidden file inputs -->
+      <input type="file" id="accountsFile" accept=".csv" />
+      <input type="file" id="urlsFile" accept=".csv" />
+
+      <div class="btn-row">
+        <button type="submit" id="startBtn">Start automation</button>
+        <button type="button" id="stopBtn" disabled>Stop</button>
+      </div>
+    </form>
+
+    <div class="terminal-section">
+      <div class="terminal-label"><span class="dot"></span>Live output</div>
+      <div class="terminal" id="terminal">
+        <div class="log-line log-info"><span class="ts">00:00:00</span>System ready. Upload a CSV to begin.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const terminal   = document.getElementById('terminal');
+    const form       = document.getElementById('uploadForm');
+    const startBtn   = document.getElementById('startBtn');
+    const stopBtn    = document.getElementById('stopBtn');
+
+    const accountMode     = document.getElementById('accountMode');
+    const urlMode         = document.getElementById('urlMode');
+    const accountPanel    = document.getElementById('accountPanel');
+    const urlManualPanel  = document.getElementById('urlManualPanel');
+    const urlAutoPanel    = document.getElementById('urlAutoPanel');
+
+    // ── Logging ──────────────────────────────────────────────
+    function appendLog(text, type = '') {
+      const line = document.createElement('div');
+      line.className = 'log-line ' + (type ? `log-${type}` : '');
+      const ts = document.createElement('span');
+      ts.className = 'ts';
+      ts.textContent = new Date().toLocaleTimeString('en-GB');
+      line.appendChild(ts);
+      line.appendChild(document.createTextNode(text));
+      terminal.appendChild(line);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    // ── Dropzone wiring ───────────────────────────────────────
+    function wireDropzone({ zoneId, inputId, titleId, subId }) {
+      const zone  = document.getElementById(zoneId);
+      const input = document.getElementById(inputId);
+      const title = document.getElementById(titleId);
+      const sub   = document.getElementById(subId);
+
+      input.addEventListener('change', () => {
+        if (input.files[0]) {
+          zone.classList.add('has-file');
+          title.textContent = input.files[0].name;
+          sub.textContent   = 'Ready to upload';
+        }
+      });
+
+      ['dragover', 'dragleave', 'drop'].forEach(evt => {
+        zone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          zone.classList.toggle('dragover', evt === 'dragover');
+        });
+      });
+
+      zone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          input.files = e.dataTransfer.files;
+          input.dispatchEvent(new Event('change'));
+        }
+      });
+    }
+
+    wireDropzone({ zoneId: 'accountsZone', inputId: 'accountsFile', titleId: 'accountsTitle', subId: 'accountsSub' });
+    wireDropzone({ zoneId: 'urlsZone',     inputId: 'urlsFile',     titleId: 'urlsTitle',     subId: 'urlsSub'     });
+
+    // ── Mode switching ────────────────────────────────────────
+    function applyModes() {
+      const aMode = accountMode.value;
+      const uMode = urlMode.value;
+
+      accountPanel.classList.toggle('visible', aMode === 'manual');
+      urlManualPanel.classList.toggle('visible', uMode === 'manual');
+      urlAutoPanel.classList.toggle('visible', uMode === 'autogen');
+    }
+
+    accountMode.addEventListener('change', applyModes);
+    urlMode.addEventListener('change', applyModes);
+    applyModes(); // run on load
+
+    // ── Running state ─────────────────────────────────────────
+    function setRunningState(isRunning) {
+      startBtn.disabled    = isRunning;
+      startBtn.textContent = isRunning ? 'Running...' : 'Start automation';
+      stopBtn.disabled     = !isRunning;
+    }
+
+    // ── SSE log stream ────────────────────────────────────────
+    try {
+      const eventSource = new EventSource('/api/logs');
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        appendLog(data.message, data.type);
+        if (data.done) setRunningState(false);
+      };
+    } catch (e) {}
+
+    // ── Form submit ───────────────────────────────────────────
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const aMode = accountMode.value;
+      const uMode = urlMode.value;
+
+      // Validate conditional required fields
+      if (aMode === 'manual' && !document.getElementById('accountsFile').files[0]) {
+        appendLog('Please upload an accounts.csv file.', 'error'); return;
+      }
+      if (uMode === 'manual' && !document.getElementById('urlsFile').files[0]) {
+        appendLog('Please upload a urls.csv file.', 'error'); return;
+      }
+      if (uMode === 'autogen') {
+        const url   = document.getElementById('targetUrl').value.trim();
+        const count = document.getElementById('urlCount').value.trim();
+        if (!url)   { appendLog('Please enter a target URL.', 'error'); return; }
+        if (!count) { appendLog('Please enter the number of target URL accounts.', 'error'); return; }
+      }
+
+      const formData = new FormData();
+      formData.append('accountMode', aMode);
+      formData.append('urlMode', uMode);
+
+      if (aMode === 'manual') {
+        formData.append('accountsFile', document.getElementById('accountsFile').files[0]);
+      }
+      if (uMode === 'manual') {
+        formData.append('urlsFile', document.getElementById('urlsFile').files[0]);
+      }
+      if (uMode === 'autogen') {
+        formData.append('targetUrl', document.getElementById('targetUrl').value.trim());
+        formData.append('urlCount',  document.getElementById('urlCount').value.trim());
+      }
+
+      setRunningState(true);
+      appendLog(`Starting — account: ${aMode}, url: ${uMode}`, 'info');
+
+      try {
+        const response = await fetch('/api/start', { method: 'POST', body: formData });
+        const result   = await response.json();
+        if (!result.success) {
+          appendLog(`Error: ${result.error}`, 'error');
+          setRunningState(false);
+        }
+      } catch (err) {
+        appendLog(`Server connection error: ${err.message}`, 'error');
+        setRunningState(false);
+      }
+    });
+
+    // ── Stop ──────────────────────────────────────────────────
+    stopBtn.addEventListener('click', async () => {
+      stopBtn.disabled     = true;
+      stopBtn.textContent  = 'Stopping...';
+      appendLog('Stop signal sent. Waiting for current task to finish...', 'info');
+
+      try {
+        const response = await fetch('/api/stop', { method: 'POST' });
+        const result   = await response.json();
+        if (!result.success) appendLog(`Error: ${result.error}`, 'error');
+      } catch (err) {
+        appendLog(`Server connection error: ${err.message}`, 'error');
+      } finally {
+        stopBtn.textContent = 'Stop';
+        setRunningState(false);
+      }
+    });
+
+    // ── Status sync on page load/refresh ─────────────────────
+    async function syncServerStatus() {
+      try {
+        const res  = await fetch('/api/status');
+        const data = await res.json();
+
+        if (data.isRunning) {
+          startBtn.disabled    = true;
+          startBtn.textContent = 'Running...';
+          stopBtn.disabled     = data.isStopping;
+          stopBtn.textContent  = data.isStopping ? 'Stopping...' : 'Stop';
+        } else {
+          startBtn.disabled    = false;
+          startBtn.textContent = 'Start automation';
+          stopBtn.disabled     = true;
+          stopBtn.textContent  = 'Stop';
+        }
+      } catch (err) {
+        console.error('Failed to sync status:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', syncServerStatus);
+  </script>
+</body>
+  </html>
