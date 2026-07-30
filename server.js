@@ -81,9 +81,9 @@ function generateRandomPassword() {
 // Telecom generator for Auto Account Mode (OPay friendly prefixes)
 function generateAccountNumber() {
   const prefixes = [
-    '8067', '8034', '9043', '8167', '7035', 
-    '9067', '8178', '9053', '70648', '90397', 
-    '903467', '90333', '902750', '81495', '81424', '808188'
+    '8067', '8034', '9043', '8167', '70735', 
+    '9067', '8178', '9053', '70678', '90397', 
+    '903469', '90373', '902750', '81495', '81424', '808188'
   ];
   const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
 
@@ -292,7 +292,7 @@ async function runHybridEngine(config) {
   } 
   // PATH B: AUTO-GEN URLS (Self-Feeding Seed & Fodder Farm)
   else if (urlMode === 'autogen') {
-    const urlPrefix = 'dannyboy';
+    const urlPrefix = 'zenxico';
     const urlDomain = '@gmail.com';
 
     for (let cycle = 1; cycle <= urlCount; cycle++) {
