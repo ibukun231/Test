@@ -292,7 +292,7 @@ async function runHybridEngine(config) {
   } 
   // PATH B: AUTO-GEN URLS (Self-Feeding Seed & Fodder Farm)
   else if (urlMode === 'autogen') {
-    const urlPrefix = 'zenxicoleyra';
+    const urlPrefix = 'zenxicoleyrap';
     const urlDomain = '@gmail.com';
 
     for (let cycle = 1; cycle <= urlCount; cycle++) {
