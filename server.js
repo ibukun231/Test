@@ -81,9 +81,9 @@ function generateRandomPassword() {
 // Telecom generator for Auto Account Mode (OPay friendly prefixes)
 function generateAccountNumber() {
   const prefixes = [
-    '8065', '808882', '90214', '80944', '80816', 
-    '90415', '81059', '90537', '70678', '90397', 
-    '903469', '90360', '90411', '81495', '81424', '808188'
+    '80645', '808882', '90214', '80944', '80816', 
+    '904152', '81059', '90532', '70678', '90397', 
+    '903469', '90365', '90446', '81497', '81423', '808189'
   ];
   const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
 
